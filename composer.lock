@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e912eeecfffc016edd611e750a251efa",
+    "content-hash": "5226d3215c1aed7f2025c582372c6318",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -6434,6 +6434,82 @@
                 }
             ],
             "time": "2024-11-21T01:49:47+00:00"
+        },
+        {
+            "name": "voxyfy/anadolupay",
+            "version": "v0.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Voxyfy/anadolupay.git",
+                "reference": "4f4ad9079338f6cf65d8c9380265453b861ae4d1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Voxyfy/anadolupay/zipball/4f4ad9079338f6cf65d8c9380265453b861ae4d1",
+                "reference": "4f4ad9079338f6cf65d8c9380265453b861ae4d1",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/support": "^12.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.14",
+                "nunomaduro/collision": "^8.8",
+                "orchestra/testbench": "^10.0.0",
+                "pestphp/pest": "^4.0",
+                "pestphp/pest-plugin-arch": "^4.0",
+                "pestphp/pest-plugin-laravel": "^4.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "AnadoluPay": "Voxyfy\\AnadoluPay\\Facades\\AnadoluPay"
+                    },
+                    "providers": [
+                        "Voxyfy\\AnadoluPay\\AnadoluPayServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Voxyfy\\AnadoluPay\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Voxyfy",
+                    "email": "info@voxyfy.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Unified Laravel 12 payment gateway abstraction for Turkish providers.",
+            "homepage": "https://github.com/Voxyfy/anadolupay",
+            "keywords": [
+                "Turkish",
+                "anadolupay",
+                "gateway",
+                "laravel",
+                "payment",
+                "turkey",
+                "voxyfy"
+            ],
+            "support": {
+                "issues": "https://github.com/Voxyfy/anadolupay/issues",
+                "source": "https://github.com/Voxyfy/anadolupay/tree/v0.1.0"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/:vendor_name",
+                    "type": "github"
+                }
+            ],
+            "time": "2026-01-18T13:40:12+00:00"
         }
     ],
     "packages-dev": [
