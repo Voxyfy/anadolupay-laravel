@@ -72,17 +72,28 @@ new #[Layout('layouts.auth')] class extends Component
     }
 
     /**
-     * Sağlayıcıların yayınladığı test kartları.
+     * Sağlayıcıların **resmî** olarak yayınladığı test kartları.
      *
-     * Tam liste için depodaki TEST-KARTLARI.md dosyasına bakın.
+     * Tam liste ve kaynakları için pakette TEST-KARTLARI.md dosyasına bakın.
+     * Buraya yalnızca kaynağı doğrulanmış numaralar konur: çalışmayan bir
+     * test kartı, hiç kart olmamasından daha çok vakit kaybettirir.
      */
     #[Computed]
     public function cards(): array
     {
         return [
-            'iyzico-success' => ['label' => 'iyzico — Başarılı', 'number' => '5890040000000016', 'month' => '12', 'year' => '2030', 'cvv' => '123'],
+            // iyzico — docs.iyzico.com/en/add-ons/test-cards
+            'iyzico-success' => ['label' => 'iyzico — Başarılı (Akbank Master)', 'number' => '5890040000000016', 'month' => '12', 'year' => '2030', 'cvv' => '123'],
             'iyzico-insufficient' => ['label' => 'iyzico — Yetersiz bakiye', 'number' => '4111111111111129', 'month' => '12', 'year' => '2030', 'cvv' => '123'],
-            'iyzico-not-3ds' => ['label' => 'iyzico — 3D’ye kayıtlı değil', 'number' => '4127763710346799', 'month' => '12', 'year' => '2030', 'cvv' => '123'],
+            'iyzico-invalid-cvc' => ['label' => 'iyzico — Geçersiz CVC', 'number' => '4124111111111116', 'month' => '12', 'year' => '2030', 'cvv' => '123'],
+            'iyzico-3ds-fail' => ['label' => 'iyzico — 3D başlatma başarısız', 'number' => '4151111111111112', 'month' => '12', 'year' => '2030', 'cvv' => '123'],
+            'iyzico-mdstatus-0' => ['label' => 'iyzico — Onaylı ama mdStatus=0', 'number' => '4131111111111117', 'month' => '12', 'year' => '2030', 'cvv' => '123'],
+            // Garanti — dev.garantibbva.com.tr/test-kartlari (3D OTP: 147852)
+            'garanti-simulator' => ['label' => 'Garanti — Simulator (OTP 147852)', 'number' => '4282209004348015', 'month' => '08', 'year' => '2027', 'cvv' => '123'],
+            'garanti-bonus' => ['label' => 'Garanti — Bonus (OTP 147852)', 'number' => '5549600732695519', 'month' => '04', 'year' => '2030', 'cvv' => '244'],
+            // PayTR — dev.paytr.com
+            'paytr-visa' => ['label' => 'PayTR — Visa', 'number' => '4355084355084358', 'month' => '12', 'year' => '2030', 'cvv' => '000'],
+            'paytr-master' => ['label' => 'PayTR — Mastercard', 'number' => '5406675406675403', 'month' => '12', 'year' => '2030', 'cvv' => '000'],
         ];
     }
 
@@ -274,7 +285,7 @@ new #[Layout('layouts.auth')] class extends Component
             <flux:select
                 wire:model.live="preset"
                 label="Hazır test kartı"
-                description="Tüm sağlayıcıların kartları için depodaki TEST-KARTLARI.md"
+                description="Yalnızca resmî kaynaktan doğrulanmış kartlar. Tam liste: TEST-KARTLARI.md"
             >
                 <flux:select.option value="">— elle gir —</flux:select.option>
                 @foreach ($this->cards as $key => $card)
