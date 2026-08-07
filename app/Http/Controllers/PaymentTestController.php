@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
-use Voxyfy\AnadoluPay\Contracts\SupportsStatusQuery;
 use Voxyfy\AnadoluPay\DTO\CardData;
 use Voxyfy\AnadoluPay\DTO\CreatePaymentData;
 use Voxyfy\AnadoluPay\DTO\VerifyPaymentData;
@@ -27,18 +26,6 @@ use Voxyfy\AnadoluPay\Support\Money;
 class PaymentTestController extends Controller
 {
     /**
-     * Önizleme formu.
-     */
-    public function index()
-    {
-        return view('payment.preview', [
-            'drivers' => AnadoluPay::available(),
-            'cards' => $this->testCards(),
-            'lastResult' => session('payment_result'),
-        ]);
-    }
-
-    /**
      * Ödemeyi başlatır ve müşteriyi bankaya yönlendirir.
      */
     public function pay(Request $request)
@@ -53,9 +40,13 @@ class PaymentTestController extends Controller
             'expire_year' => ['required', 'string'],
             'cvv' => ['required', 'string'],
             'holder_name' => ['nullable', 'string'],
+            'order_id' => ['nullable', 'string'],
         ]);
 
-        $orderId = 'TEST-'.strtoupper(Str::random(10));
+        // Sipariş numarasını Volt bileşeni üretir; böylece kullanıcı
+        // ödemeyi başlatmadan önce numarayı görebilir ve sonra durum
+        // sorgusunda aynı numarayı kullanabilir.
+        $orderId = $validated['order_id'] ?: 'TEST-'.strtoupper(Str::random(10));
 
         $data = new CreatePaymentData(
             // Tutarı kuruş cinsinden taşımak float yuvarlama hatalarını önler.
@@ -174,54 +165,13 @@ class PaymentTestController extends Controller
     }
 
     /**
-     * Siparişin bankadaki güncel durumunu sorgular.
-     *
-     * Zaman aşımı gibi belirsiz durumları kapatmanın tek yolu budur.
-     */
-    public function status(Request $request)
-    {
-        $driver = (string) $request->query('driver', 'iyzico');
-        $orderId = (string) $request->query('order_id', '');
-
-        $gateway = AnadoluPay::driver($driver);
-
-        if (! $gateway instanceof SupportsStatusQuery) {
-            return back()->with('payment_result', [
-                'success' => false,
-                'title' => 'Desteklenmiyor',
-                'message' => "'{$driver}' driver'ı durum sorgusu sunmuyor.",
-            ]);
-        }
-
-        try {
-            $status = $gateway->status($orderId);
-        } catch (Throwable $e) {
-            return $this->result($driver, $e->getMessage(), false, [], ['class' => $e::class]);
-        }
-
-        return $this->result(
-            driver: $driver,
-            message: $status->found ? "Durum: {$status->status}" : 'Banka bu siparişi tanımıyor',
-            success: $status->isPaid(),
-            payload: [],
-            detail: [
-                'found' => $status->found,
-                'status' => $status->status,
-                'payment_id' => $status->paymentId,
-                'amount' => $status->amount?->toDecimalString(),
-            ],
-            raw: $status->raw,
-        );
-    }
-
-    /**
      * @param  array<string, mixed>  $context
      */
     protected function back(string $title, string $message, array $context = [])
     {
         Log::warning('AnadoluPay önizleme hatası', ['title' => $title, 'message' => $message]);
 
-        return redirect()->route('payment.preview')->with('payment_result', [
+        return redirect()->route('payment.preview')->with('payment_error', [
             'success' => false,
             'title' => $title,
             'message' => $message,
@@ -250,39 +200,5 @@ class PaymentTestController extends Controller
             'detail' => $detail,
             'raw' => $raw,
         ]);
-    }
-
-    /**
-     * Sağlayıcıların yayınladığı test kartları.
-     *
-     * Tam liste için depodaki TEST-KARTLARI.md dosyasına bakın.
-     *
-     * @return array<string, array{label: string, number: string, month: string, year: string, cvv: string}>
-     */
-    protected function testCards(): array
-    {
-        return [
-            'iyzico-success' => [
-                'label' => 'iyzico — Başarılı (Halkbank Master)',
-                'number' => '5890040000000016',
-                'month' => '12',
-                'year' => '2030',
-                'cvv' => '123',
-            ],
-            'iyzico-insufficient' => [
-                'label' => 'iyzico — Yetersiz bakiye',
-                'number' => '4111111111111129',
-                'month' => '12',
-                'year' => '2030',
-                'cvv' => '123',
-            ],
-            'iyzico-not-3ds' => [
-                'label' => 'iyzico — 3D Secure’a kayıtlı değil',
-                'number' => '4127763710346799',
-                'month' => '12',
-                'year' => '2030',
-                'cvv' => '123',
-            ],
-        ];
     }
 }

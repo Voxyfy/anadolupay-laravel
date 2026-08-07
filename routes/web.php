@@ -14,9 +14,8 @@ Route::get('/', function () {
 | callback rotası CSRF doğrulamasından muaf tutulur. Güvenlik, paketin
 | imza doğrulamasıyla sağlanır.
 */
-Route::get('/payment', [PaymentTestController::class, 'index'])->name('payment.preview');
+Route::livewire('/payment', 'pages::payment-preview')->name('payment.preview');
 Route::post('/payment', [PaymentTestController::class, 'pay'])->name('payment.pay');
-Route::get('/payment/status', [PaymentTestController::class, 'status'])->name('payment.status');
 
 Route::match(['get', 'post'], '/payment/callback', [PaymentTestController::class, 'callback'])
     ->withoutMiddleware([Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
