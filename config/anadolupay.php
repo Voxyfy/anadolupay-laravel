@@ -12,7 +12,10 @@ use Voxyfy\AnadoluPay\Gateways\Bank\VakifKatilimGateway;
 use Voxyfy\AnadoluPay\Gateways\FakeGateway;
 use Voxyfy\AnadoluPay\Gateways\IyzicoGateway;
 use Voxyfy\AnadoluPay\Gateways\Provider\AkbankPosGateway;
+use Voxyfy\AnadoluPay\Gateways\Provider\CraftgateGateway;
+use Voxyfy\AnadoluPay\Gateways\Provider\MokaGateway;
 use Voxyfy\AnadoluPay\Gateways\Provider\ParamGateway;
+use Voxyfy\AnadoluPay\Gateways\Provider\ParatikaGateway;
 use Voxyfy\AnadoluPay\Gateways\Provider\PayTrGateway;
 use Voxyfy\AnadoluPay\Gateways\Provider\ToslaGateway;
 
@@ -112,6 +115,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | İstek zaman aşımı (saniye)
+    |--------------------------------------------------------------------------
+    |
+    | Banka test terminalleri canlıdan belirgin biçimde yavaş olabiliyor;
+    | 3D provizyonu 30 saniyeyi aşabilir. Her banka preset'i kendi
+    | `timeout` değerini tanımlayarak bunu geçersiz kılabilir.
+    |
+    | Zaman aşımı hiçbir zaman tekrar denenmez: istek bankaya ulaşmış ve
+    | işlenmiş olabilir, tekrar denemek çift çekim üretir. Böyle bir durumda
+    | sonucu durum sorgusuyla netleştirin.
+    |
+    */
+
+    'timeout' => env('ANADOLUPAY_TIMEOUT', 30),
+
+    /*
+    |--------------------------------------------------------------------------
     | Mükerrer Ödeme Koruması
     |--------------------------------------------------------------------------
     |
@@ -195,6 +215,8 @@ return [
             'password' => env('ZIRAAT_PASSWORD'),
             'secret_key' => env('ZIRAAT_SECRET_KEY'),
             'test_mode' => env('ZIRAAT_TEST_MODE', false),
+            // Ziraat'in stage terminali yavaş; basit bir sorgu bile ~8 sn sürüyor.
+            'timeout' => env('ZIRAAT_TIMEOUT'),
             'endpoints' => [
                 'payment_api' => env('ZIRAAT_PAYMENT_API', 'https://sanalpos2.ziraatbank.com.tr/fim/api'),
                 'gateway_3d' => env('ZIRAAT_GATEWAY_3D', 'https://sanalpos2.ziraatbank.com.tr/fim/est3Dgate'),
@@ -250,6 +272,46 @@ return [
             'endpoints' => [
                 'payment_api' => env('SEKERBANK_PAYMENT_API', 'https://sanalpos.sekerbank.com.tr/fim/api'),
                 'gateway_3d' => env('SEKERBANK_GATEWAY_3D', 'https://sanalpos.sekerbank.com.tr/fim/est3Dgate'),
+            ],
+        ],
+
+        'ing' => [
+            'gateway' => AssecoGateway::class,
+            'merchant_id' => env('ING_MERCHANT_ID'),
+            'username' => env('ING_USERNAME'),
+            'password' => env('ING_PASSWORD'),
+            'secret_key' => env('ING_SECRET_KEY'),
+            'test_mode' => env('ING_TEST_MODE', false),
+            'endpoints' => [
+                // sanalpos.ingbank.com.tr adresi de aynı NestPay kurulumuna çıkar.
+                'payment_api' => env('ING_PAYMENT_API', 'https://sanalpos.ing.com.tr/fim/api'),
+                'gateway_3d' => env('ING_GATEWAY_3D', 'https://sanalpos.ing.com.tr/fim/est3Dgate'),
+            ],
+        ],
+
+        'alternatifbank' => [
+            'gateway' => AssecoGateway::class,
+            'merchant_id' => env('ALTERNATIFBANK_MERCHANT_ID'),
+            'username' => env('ALTERNATIFBANK_USERNAME'),
+            'password' => env('ALTERNATIFBANK_PASSWORD'),
+            'secret_key' => env('ALTERNATIFBANK_SECRET_KEY'),
+            'test_mode' => env('ALTERNATIFBANK_TEST_MODE', false),
+            'endpoints' => [
+                'payment_api' => env('ALTERNATIFBANK_PAYMENT_API', 'https://sanalpos.alternatifbank.com.tr/fim/api'),
+                'gateway_3d' => env('ALTERNATIFBANK_GATEWAY_3D', 'https://sanalpos.alternatifbank.com.tr/fim/est3Dgate'),
+            ],
+        ],
+
+        'turkiyefinans' => [
+            'gateway' => AssecoGateway::class,
+            'merchant_id' => env('TURKIYEFINANS_MERCHANT_ID'),
+            'username' => env('TURKIYEFINANS_USERNAME'),
+            'password' => env('TURKIYEFINANS_PASSWORD'),
+            'secret_key' => env('TURKIYEFINANS_SECRET_KEY'),
+            'test_mode' => env('TURKIYEFINANS_TEST_MODE', false),
+            'endpoints' => [
+                'payment_api' => env('TURKIYEFINANS_PAYMENT_API', 'https://sanalpos.turkiyefinans.com.tr/fim/api'),
+                'gateway_3d' => env('TURKIYEFINANS_GATEWAY_3D', 'https://sanalpos.turkiyefinans.com.tr/fim/est3Dgate'),
             ],
         ],
 
@@ -471,6 +533,71 @@ return [
                 'payment_api' => env('TOSLA_PAYMENT_API', 'https://entegrasyon.tosla.com/api/Payment'),
                 'gateway_3d' => env('TOSLA_GATEWAY_3D', 'https://entegrasyon.tosla.com/api/Payment/ProcessCardForm'),
                 'gateway_3d_host' => env('TOSLA_GATEWAY_3D_HOST', 'https://entegrasyon.tosla.com/api/Payment/threeDSecure'),
+            ],
+        ],
+
+        'paratika' => [
+            'gateway' => ParatikaGateway::class,
+            // Paratika terminolojisi: merchant_id => MERCHANT,
+            // username => Merchant Api User e-postası, password => şifresi.
+            // secret_key yalnızca 3D dönüş imzasını doğrulamak için kullanılır.
+            'merchant_id' => env('PARATIKA_MERCHANT'),
+            'username' => env('PARATIKA_MERCHANT_USER'),
+            'password' => env('PARATIKA_MERCHANT_PASSWORD'),
+            'secret_key' => env('PARATIKA_SECRET_KEY'),
+            'test_mode' => env('PARATIKA_TEST_MODE', false),
+            'endpoints' => [
+                // Test ortamı: https://entegrasyon.paratika.com.tr
+                'payment_api' => env('PARATIKA_PAYMENT_API', 'https://vpos.paratika.com.tr/paratika/api/v2'),
+                // 3D Pay: doğrulama ve satış tek adımda.
+                'gateway_3d' => env('PARATIKA_GATEWAY_3D', 'https://vpos.paratika.com.tr/paratika/api/v2/post/sale3d'),
+                // Klasik 3D: yalnızca kimlik doğrulama, satış dönüşte yapılır.
+                'gateway_3d_auth' => env('PARATIKA_GATEWAY_3D_AUTH', 'https://vpos.paratika.com.tr/paratika/api/v2/post/auth3d'),
+                // Ortak ödeme sayfası.
+                'gateway_3d_host' => env('PARATIKA_GATEWAY_3D_HOST', 'https://vpos.paratika.com.tr/payment'),
+            ],
+        ],
+
+        'moka' => [
+            'gateway' => MokaGateway::class,
+            // Moka terminolojisi: merchant_id => DealerCode.
+            // CheckKey bu üç değerden türetilir; ayrı bir gizli anahtar yoktur.
+            'merchant_id' => env('MOKA_DEALER_CODE'),
+            'username' => env('MOKA_USERNAME'),
+            'password' => env('MOKA_PASSWORD'),
+            'test_mode' => env('MOKA_TEST_MODE', false),
+            'extra' => [
+                // Havuz ödemesi: para çekilir ama onaylanana kadar bekletilir.
+                'pool_payment' => env('MOKA_POOL_PAYMENT', false),
+                // 3D sonucu IFrame içine dönecekse 1 yapın.
+                'redirect_type' => env('MOKA_REDIRECT_TYPE', 0),
+                'software' => env('MOKA_SOFTWARE', 'anadolupay'),
+            ],
+            'endpoints' => [
+                // Test: https://service.refmokaunited.com
+                'payment_api' => env('MOKA_PAYMENT_API', 'https://service.mokaunited.com'),
+            ],
+        ],
+
+        'craftgate' => [
+            'gateway' => CraftgateGateway::class,
+            // Craftgate terminolojisi: username => API Key,
+            // secret_key => Secret Key, password => 3D Secure Callback Key.
+            // Son ikisi farklı anahtarlardır: ilki API isteklerini,
+            // ikincisi 3D dönüşünü imzalar.
+            'username' => env('CRAFTGATE_API_KEY'),
+            'secret_key' => env('CRAFTGATE_SECRET_KEY'),
+            'password' => env('CRAFTGATE_CALLBACK_KEY'),
+            'test_mode' => env('CRAFTGATE_TEST_MODE', false),
+            'extra' => [
+                // Webhook imzası için panelden alınan Merchant Hook Key.
+                'merchant_hook_key' => env('CRAFTGATE_HOOK_KEY'),
+                // PRODUCT veya LISTING_OR_SUBSCRIPTION.
+                'payment_group' => env('CRAFTGATE_PAYMENT_GROUP', 'PRODUCT'),
+            ],
+            'endpoints' => [
+                // Sandbox: https://sandbox-api.craftgate.io
+                'payment_api' => env('CRAFTGATE_PAYMENT_API', 'https://api.craftgate.io'),
             ],
         ],
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
@@ -65,8 +66,14 @@ class PaymentTestController extends Controller
                 'country' => 'Turkey',
                 'zipCode' => '34000',
             ],
-            successUrl: route('payment.callback'),
-            failUrl: route('payment.callback'),
+            /*
+             * Bağlam dönüş adresinde taşınır, oturumda değil: bankanın
+             * POST'u siteler arası olduğu için `SameSite=lax` çerezi
+             * gönderilmez ve oturum boş gelir. Sağlayıcı adı olmadan
+             * dönüşü hangi driver'ın doğrulayacağı bilinemez.
+             */
+            successUrl: route('payment.callback', ['driver' => $validated['driver'], 'order' => $orderId]),
+            failUrl: route('payment.callback', ['driver' => $validated['driver'], 'order' => $orderId]),
             card: new CardData(
                 number: $validated['card_number'],
                 expireMonth: $validated['expire_month'],
@@ -102,6 +109,20 @@ class PaymentTestController extends Controller
             return $this->back('Beklenmeyen hata', $e->getMessage(), ['class' => $e::class]);
         }
 
+        /*
+         * Dönüşte gerekecek bağlamı sipariş numarasıyla önbelleğe alıyoruz.
+         * Oturuma güvenilemez: bankanın dönüş POST'u siteler arası olduğu
+         * için `SameSite=lax` çerezi gönderilmez. Moka'nın `code_for_hash`
+         * değeri olmadan dönüş sonucu okunamaz.
+         */
+        Cache::put("anadolupay:order:{$orderId}", [
+            'driver' => $validated['driver'],
+            'order_id' => $orderId,
+            'amount' => $validated['amount'],
+            'installment' => (int) $validated['installment'],
+            'code_for_hash' => $response->raw['code_for_hash'] ?? null,
+        ], now()->addMinutes(30));
+
         // Sadece yönlendirme URL'i döndüyse (Tosla 3D Host gibi) oraya git.
         if (! $response->requiresForm() && $response->redirectUrl !== null) {
             return redirect()->away($response->redirectUrl);
@@ -124,10 +145,20 @@ class PaymentTestController extends Controller
      */
     public function callback(Request $request)
     {
-        $context = session('payment_context', []);
-        $driver = $context['driver'] ?? 'iyzico';
+        $orderId = $request->query('order');
 
-        $payload = $request->all();
+        // Önce önbellek (çerezden bağımsız), sonra oturum.
+        $context = ($orderId !== null ? Cache::get("anadolupay:order:{$orderId}") : null)
+            ?? session('payment_context', []);
+
+        $driver = $request->query('driver') ?? $context['driver'] ?? 'iyzico';
+
+        /*
+         * Yalnızca POST gövdesi: `all()` sorgu dizgisindeki `driver` ve
+         * `order` parametrelerini de katardı ve bankanın imzalamadığı bu
+         * alanlar hash doğrulamasını bozardı.
+         */
+        $payload = $request->post();
 
         try {
             $result = AnadoluPay::driver($driver)->verify(new VerifyPaymentData(
@@ -135,11 +166,14 @@ class PaymentTestController extends Controller
                 headers: $request->headers->all(),
                 rawBody: $request->getContent(),
                 order: [
-                    'id' => $context['order_id'] ?? null,
+                    // Oturum gelmediğinde sipariş numarası da adresten okunur.
+                    'id' => $request->query('order') ?? $context['order_id'] ?? null,
                     'amount' => $context['amount'] ?? null,
                     'currency' => 'TRY',
                     'installment' => $context['installment'] ?? 1,
                     'ip' => $request->ip(),
+                    // Moka dönüş sonucunu yalnızca bu değerle okuyabilir.
+                    'code_for_hash' => $context['code_for_hash'] ?? null,
                 ],
             ));
         } catch (InvalidSignatureException $e) {
@@ -158,7 +192,7 @@ class PaymentTestController extends Controller
             detail: [
                 'payment_id' => $result->paymentId,
                 'status' => $result->status,
-                'order_id' => $context['order_id'] ?? null,
+                'order_id' => $request->query('order') ?? $context['order_id'] ?? null,
             ],
             raw: $result->raw,
         );
