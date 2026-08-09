@@ -144,6 +144,12 @@ new #[Layout('layouts.preview')] class extends Component
             // NestPay (Ziraat ve diğer Asseco bankaları) — 3D SMS şifresi: a
             'nestpay-ziraat-visa' => ['label' => 'Ziraat / NestPay — Visa (3D şifre: a)', 'number' => '4546711234567894', 'month' => '12', 'year' => '2026', 'cvv' => '000'],
             'nestpay-ziraat-master' => ['label' => 'Ziraat / NestPay — Mastercard (3D şifre: a)', 'number' => '5401341234567891', 'month' => '12', 'year' => '2026', 'cvv' => '000'],
+            // Tosla — tosla.com/isim-icin/gelistirici-merkezi (resmî)
+            'tosla-ziraat' => ['label' => 'Tosla — Ziraat Bankkart (Visa)', 'number' => '4546711234567894', 'month' => '12', 'year' => '2026', 'cvv' => '000'],
+            'tosla-visa' => ['label' => 'Tosla — Visa', 'number' => '4531444531442283', 'month' => '12', 'year' => '2026', 'cvv' => '001'],
+            'tosla-master' => ['label' => 'Tosla — Mastercard', 'number' => '5406675406675403', 'month' => '12', 'year' => '2026', 'cvv' => '000'],
+            // Kuveyt Türk (BOA) — SKT'si geçmiş; test ortamı doğrulamayabilir.
+            'kuveyt-master' => ['label' => 'Kuveyt Türk — Mastercard (SKT geçmiş)', 'number' => '5188961939192544', 'month' => '06', 'year' => '2025', 'cvv' => '929'],
             // Paratika — docs.paratika.com.tr/test-kartlari
             'paratika-akbank' => ['label' => 'Paratika — Akbank (Visa)', 'number' => '4355084355084358', 'month' => '12', 'year' => '2030', 'cvv' => '000'],
             'paratika-isbank' => ['label' => 'Paratika — İş Bankası (Visa)', 'number' => '4508034508034509', 'month' => '12', 'year' => '2030', 'cvv' => '000'],
@@ -197,7 +203,7 @@ new #[Layout('layouts.preview')] class extends Component
     public function configuration(): array
     {
         if ($this->driver === 'fake') {
-            return ['ready' => true, 'label' => 'kimlik bilgisi gerektirmez'];
+            return ['ready' => true, 'missing' => [], 'label' => 'kimlik bilgisi gerektirmez'];
         }
 
         $alanlar = $this->driver === 'iyzico'
@@ -207,13 +213,24 @@ new #[Layout('layouts.preview')] class extends Component
                 array_flip(['merchant_id', 'terminal_id', 'username', 'password', 'secret_key']),
             );
 
-        $dolu = array_filter($alanlar, static fn (mixed $v): bool => is_scalar($v) && (string) $v !== '');
+        /*
+         * Preset'te tanımlı olan her alan dolu olmalı. "En az biri dolu"
+         * demek yetmiyordu: `.env`'de `GARANTI_USERNAME=PROVAUT` gibi sabit
+         * bir değer bulunması sağlayıcıyı hazır gösterip uyarıyı susturuyor,
+         * kullanıcı da eksik yapılandırma hatasını ancak formu gönderdikten
+         * sonra görüyordu.
+         */
+        $eksik = array_keys(array_filter(
+            $alanlar,
+            static fn (mixed $v): bool => ! is_scalar($v) || (string) $v === '',
+        ));
 
         return [
-            'ready' => $dolu !== [],
-            'label' => $dolu === []
-                ? 'kimlik bilgisi girilmemiş'
-                : count($dolu).'/'.count($alanlar).' alan dolu',
+            'ready' => $eksik === [],
+            'missing' => $eksik,
+            'label' => $eksik === []
+                ? count($alanlar).' alanın hepsi dolu'
+                : 'eksik: '.implode(', ', $eksik),
         ];
     }
 
@@ -545,7 +562,13 @@ new #[Layout('layouts.preview')] class extends Component
                     <strong>{{ $driver }}</strong> için kimlik bilgisi girilmemiş
                 </div>
                 <p class="mt-1 text-sm text-amber-800/90 dark:text-amber-200/80">
-                    Bu sağlayıcıyla ödeme denenemez. Anahtarları <code class="font-mono text-[12px]">.env</code>
+                    Eksik alanlar:
+                    @foreach ($this->configuration['missing'] as $alan)
+                        <code class="font-mono text-[12px]">{{ $alan }}</code>@if (! $loop->last), @endif
+                    @endforeach
+                </p>
+                <p class="mt-1 text-sm text-amber-800/90 dark:text-amber-200/80">
+                    Bu sağlayıcıyla ödeme denenemez. Değerleri <code class="font-mono text-[12px]">.env</code>
                     dosyasına ekleyip <code class="font-mono text-[12px]">php artisan config:clear</code> çalıştırın.
                 </p>
                 @if ($this->readyDrivers !== [])
