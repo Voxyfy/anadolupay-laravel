@@ -153,6 +153,16 @@ new #[Layout('layouts.preview')] class extends Component
             // 06/2025 · 929 eskimiş ve provizyon adımı `54 Vade Sonu Geçmiş
             // Kart` ile reddediyor. 3D doğrulama kodu: 123456.
             'kuveyt-master' => ['label' => 'Kuveyt Türk — Mastercard (3D kodu: 123456)', 'number' => '5188961939192544', 'month' => '06', 'year' => '2029', 'cvv' => '588'],
+            // Akbank — sanalposteststore-prep.akbank.com (resmî test store)
+            'akbank-master' => ['label' => 'Akbank — Mastercard', 'number' => '5578293000121055', 'month' => '11', 'year' => '2040', 'cvv' => '238'],
+            // QNB PayFor — vpostest.qnb.com.tr demo ortamı (resmî, açık)
+            // QNB 3D zorunlu tutuyor; non-secure işlem sunulmuyor.
+            'qnb-visa' => ['label' => 'QNB PayFor — Visa (CVV boş geçilebilir)', 'number' => '4022780198283155', 'month' => '01', 'year' => '2050', 'cvv' => ''],
+            // "Test Kartları" sayfasından; dördü de 3D ekranını açıyor.
+            'qnb-visa-1' => ['label' => 'QNB PayFor — Visa 1', 'number' => '4155650100416111', 'month' => '12', 'year' => '2025', 'cvv' => '656'],
+            'qnb-visa-2' => ['label' => 'QNB PayFor — Visa 2', 'number' => '4282405990002166', 'month' => '12', 'year' => '2025', 'cvv' => '656'],
+            'qnb-mc-1' => ['label' => 'QNB PayFor — Mastercard 1', 'number' => '5209882483498019', 'month' => '12', 'year' => '2025', 'cvv' => '656'],
+            'qnb-mc-2' => ['label' => 'QNB PayFor — Mastercard 2', 'number' => '5456165456165454', 'month' => '12', 'year' => '2025', 'cvv' => '656'],
             // VakıfBank — sanalpossandbox-test.vakifbank.com.tr (resmî, açık)
             // Mastercard yalnızca 3D akışında geçer; non-secure provizyonda
             // CVV ne olursa olsun 0312 ile reddedilir. Non-3D için Visa'yı seçin.
@@ -240,6 +250,29 @@ new #[Layout('layouts.preview')] class extends Component
                 ? count($alanlar).' alanın hepsi dolu'
                 : 'eksik: '.implode(', ', $eksik),
         ];
+    }
+
+    /**
+     * Sağlayıcı adının yanında görünen açıklama.
+     *
+     * Aynı bankanın iki ayrı altyapısı olduğunda hangisinin seçildiği
+     * listede anlaşılmıyor; kimlik bilgisi girilmemiş olanı seçip
+     * "eksik yapılandırma" hatası almak buradan kaynaklanıyordu.
+     */
+    public function driverLabel(string $ad): string
+    {
+        $aciklama = match ($ad) {
+            'akbank' => 'Akbank — eski Asseco POS',
+            'akbank-pos' => 'Akbank — yeni JSON API',
+            'qnb' => 'QNB — Asseco POS',
+            'qnb-payfor' => 'QNB — PayFor',
+            'ziraat' => 'Ziraat — Asseco POS',
+            'ziraat-payflex' => 'Ziraat — PayFlex',
+            'ziraat-katilim' => 'Ziraat Katılım — PayFor',
+            default => $ad,
+        };
+
+        return in_array($ad, $this->readyDrivers(), true) ? $aciklama : $aciklama.' (kimlik yok)';
     }
 
     /**
@@ -617,7 +650,7 @@ new #[Layout('layouts.preview')] class extends Component
                         <div class="grid gap-4 sm:grid-cols-3">
                             <flux:select wire:model.live="driver" name="driver" label="Sağlayıcı">
                                 @foreach ($this->drivers as $option)
-                                    <flux:select.option value="{{ $option }}">{{ $option }}</flux:select.option>
+                                    <flux:select.option value="{{ $option }}">{{ $this->driverLabel($option) }}</flux:select.option>
                                 @endforeach
                             </flux:select>
 
