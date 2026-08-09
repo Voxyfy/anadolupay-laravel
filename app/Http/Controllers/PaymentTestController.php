@@ -102,9 +102,11 @@ class PaymentTestController extends Controller
             return $this->back('Banka isteği reddetti', $e->getMessage(), $e->context);
         } catch (TransportException $e) {
             // Belirsiz sonuç: işlem bankaya ulaşmış olabilir.
-            return $this->back('Bankaya ulaşılamadı', $e->getMessage(), $e->context + [
-                'safe_to_retry' => $e->safeToRetry,
-            ]);
+            return $this->back(
+                $e->outcomeUncertain ? 'Bankaya ulaşıldı ama sonuç belirsiz' : 'Banka isteği reddetti',
+                $e->getMessage(),
+                $e->context + ['safe_to_retry' => $e->safeToRetry, 'sonuc_belirsiz' => $e->outcomeUncertain],
+            );
         } catch (Throwable $e) {
             return $this->back('Beklenmeyen hata', $e->getMessage(), ['class' => $e::class]);
         }
@@ -179,7 +181,13 @@ class PaymentTestController extends Controller
         } catch (InvalidSignatureException $e) {
             return $this->result($driver, 'İmza doğrulanamadı', false, $payload, $e->context);
         } catch (TransportException $e) {
-            return $this->result($driver, 'Bankaya ulaşılamadı — durum belirsiz', false, $payload, $e->context);
+            return $this->result(
+                $driver,
+                $e->outcomeUncertain ? 'Bankaya ulaşıldı ama sonuç belirsiz' : 'Banka isteği reddetti — işlem gerçekleşmedi',
+                false,
+                $payload,
+                $e->context + ['sonuc_belirsiz' => $e->outcomeUncertain],
+            );
         } catch (Throwable $e) {
             return $this->result($driver, $e->getMessage(), false, $payload, ['class' => $e::class]);
         }

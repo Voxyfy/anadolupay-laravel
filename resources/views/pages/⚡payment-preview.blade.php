@@ -149,7 +149,15 @@ new #[Layout('layouts.preview')] class extends Component
             'tosla-visa' => ['label' => 'Tosla — Visa', 'number' => '4531444531442283', 'month' => '12', 'year' => '2026', 'cvv' => '001'],
             'tosla-master' => ['label' => 'Tosla — Mastercard', 'number' => '5406675406675403', 'month' => '12', 'year' => '2026', 'cvv' => '000'],
             // Kuveyt Türk (BOA) — SKT'si geçmiş; test ortamı doğrulamayabilir.
-            'kuveyt-master' => ['label' => 'Kuveyt Türk — Mastercard (SKT geçmiş)', 'number' => '5188961939192544', 'month' => '06', 'year' => '2025', 'cvv' => '929'],
+            // SKT ve CVV mewebstudio/pos örneğinden; Paratika tablosundaki
+            // 06/2025 · 929 eskimiş ve provizyon adımı `54 Vade Sonu Geçmiş
+            // Kart` ile reddediyor. 3D doğrulama kodu: 123456.
+            'kuveyt-master' => ['label' => 'Kuveyt Türk — Mastercard (3D kodu: 123456)', 'number' => '5188961939192544', 'month' => '06', 'year' => '2029', 'cvv' => '588'],
+            // VakıfBank — sanalpossandbox-test.vakifbank.com.tr (resmî, açık)
+            // Mastercard yalnızca 3D akışında geçer; non-secure provizyonda
+            // CVV ne olursa olsun 0312 ile reddedilir. Non-3D için Visa'yı seçin.
+            'vakifbank-visa' => ['label' => 'VakıfBank — Visa', 'number' => '4355084000000001', 'month' => '12', 'year' => '2029', 'cvv' => '000'],
+            'vakifbank-master' => ['label' => 'VakıfBank — Mastercard (yalnız 3D)', 'number' => '5521010140829928', 'month' => '12', 'year' => '2029', 'cvv' => '961'],
             // Paratika — docs.paratika.com.tr/test-kartlari
             'paratika-akbank' => ['label' => 'Paratika — Akbank (Visa)', 'number' => '4355084355084358', 'month' => '12', 'year' => '2030', 'cvv' => '000'],
             'paratika-isbank' => ['label' => 'Paratika — İş Bankası (Visa)', 'number' => '4508034508034509', 'month' => '12', 'year' => '2030', 'cvv' => '000'],
@@ -369,10 +377,18 @@ new #[Layout('layouts.preview')] class extends Component
                 'data' => $callback(AnadoluPay::driver($this->driver)),
             ];
         } catch (TransportException $e) {
+            // Belirsizlik ile kesin ret farklı şeylerdir: banka isteği
+            // okumadan reddettiyse (4xx) hiçbir şey olmamıştır.
             $this->opResult = [
                 'operation' => $name,
                 'ok' => false,
-                'data' => ['hata' => 'Sağlayıcıya ulaşılamadı — sonuç belirsiz', 'mesaj' => $e->getMessage()],
+                'data' => [
+                    'hata' => $e->outcomeUncertain
+                        ? 'Sağlayıcıya ulaşıldı ama sonuç belirsiz — durum sorgusuyla teyit edin'
+                        : 'Sağlayıcı isteği reddetti — işlem gerçekleşmedi',
+                    'mesaj' => $e->getMessage(),
+                    'tekrar_denenebilir' => $e->safeToRetry,
+                ],
             ];
         } catch (PaymentFailedException $e) {
             $this->opResult = [
