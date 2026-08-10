@@ -189,6 +189,10 @@ new #[Layout('layouts.preview')] class extends Component
             // Albaraka Türk (PosNet V1) — banka kart yayınlamıyor; aşağıdaki
             // mewebstudio/pos örneğindeki karttır, 3D onay kodu 34020.
             'albaraka-visa' => ['label' => 'Albaraka — Visa (3D onay kodu: 34020)', 'number' => '4506347010299085', 'month' => '09', 'year' => '2026', 'cvv' => '000'],
+            // Ziraat / Innova 3D Pay test formundan. Dokümanın §10.5'teki
+            // kartı (4546720000621074, 05/2026) artık eskimiştir; aşağıdaki
+            // test formunun varsayılanıdır ve tarihi ileridedir.
+            'ziraat-3dpay' => ['label' => 'Ziraat 3D Pay — Mastercard', 'number' => '5549601963997012', 'month' => '09', 'year' => '2029', 'cvv' => '259'],
         ];
     }
 

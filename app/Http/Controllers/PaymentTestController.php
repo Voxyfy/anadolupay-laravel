@@ -96,6 +96,18 @@ class PaymentTestController extends Controller
             ],
         ]);
 
+        /*
+         * Bazı banka test ortamları çok yavaştır: Ziraat'in PayFlex preprod'u
+         * MPI isteğine ~50-62 saniyede yanıt veriyor. PHP-FPM'in php.ini'den
+         * gelen 30 saniyelik sınırı bu isteği ortasında kesiyor, tarayıcıda
+         * 502 olarak görünüyor. Burada sınır kaldırılıyor.
+         *
+         * Not: nginx'in `fastcgi_read_timeout` değeri de yeterli olmalı;
+         * Valet'in site conf'unda tanımlı değilse varsayılan 60 saniyedir ve
+         * PHP hâlâ çalışırken bağlantıyı kesip 502 döndürür.
+         */
+        set_time_limit(0);
+
         try {
             $response = AnadoluPay::driver($validated['driver'])->createPayment($data);
         } catch (PaymentFailedException $e) {

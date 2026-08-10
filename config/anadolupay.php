@@ -393,6 +393,7 @@ return [
             'terminal_id' => env('ZIRAAT_PAYFLEX_TERMINAL_ID'),
             'password' => env('ZIRAAT_PAYFLEX_PASSWORD'),
             'test_mode' => env('ZIRAAT_PAYFLEX_TEST_MODE', false),
+            'timeout' => env('ZIRAAT_PAYFLEX_TIMEOUT'),
             'endpoints' => [
                 'payment_api' => env('ZIRAAT_PAYFLEX_PAYMENT_API', 'https://sanalpos.ziraatbank.com.tr/v4/v3/Vposreq.aspx'),
                 'gateway_3d' => env('ZIRAAT_PAYFLEX_GATEWAY_3D', 'https://mpi.ziraatbank.com.tr/Enrollment.aspx'),
