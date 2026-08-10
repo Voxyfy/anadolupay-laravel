@@ -186,6 +186,9 @@ new #[Layout('layouts.preview')] class extends Component
             'paycell-akbank-master' => ['label' => 'Paycell — Akbank (Mastercard)', 'number' => '5578293000121055', 'month' => '11', 'year' => '2040', 'cvv' => '313'],
             'paycell-denizbank' => ['label' => 'Paycell — DenizBank (3D şifre: 123456)', 'number' => '5200190006338608', 'month' => '01', 'year' => '2030', 'cvv' => '410'],
             'paycell-ziraat' => ['label' => 'Paycell — Ziraat (3D şifre: a)', 'number' => '4546711234567894', 'month' => '12', 'year' => '2026', 'cvv' => '000'],
+            // Albaraka Türk (PosNet V1) — banka kart yayınlamıyor; aşağıdaki
+            // mewebstudio/pos örneğindeki karttır, 3D onay kodu 34020.
+            'albaraka-visa' => ['label' => 'Albaraka — Visa (3D onay kodu: 34020)', 'number' => '4506347010299085', 'month' => '09', 'year' => '2026', 'cvv' => '000'],
         ];
     }
 
