@@ -171,6 +171,21 @@ new #[Layout('layouts.preview')] class extends Component
             // Paratika — docs.paratika.com.tr/test-kartlari
             'paratika-akbank' => ['label' => 'Paratika — Akbank (Visa)', 'number' => '4355084355084358', 'month' => '12', 'year' => '2030', 'cvv' => '000'],
             'paratika-isbank' => ['label' => 'Paratika — İş Bankası (Visa)', 'number' => '4508034508034509', 'month' => '12', 'year' => '2030', 'cvv' => '000'],
+            // Yapı Kredi PosNet — banka test kartı yayınlamıyor; aşağıdaki,
+            // entegrasyon dokümanının XML örneğinde geçen karttır ve gerçek
+            // bir test kartı olduğu doğrulanmadı. PosNet'te SKT biçimi
+            // YYAA'dır ve doküman test ortamında CVC olarak "XXX" kullanıldığını
+            // söyler; kart setiniz öyleyse 111 yerine XXX deneyin.
+            'yapikredi-master' => ['label' => 'Yapı Kredi — Mastercard (doğrulanmadı)', 'number' => '5400637500005263', 'month' => '12', 'year' => '2030', 'cvv' => '111'],
+            // Paycell — paycellapi.apidog.io/test-kredi-kartlari (resmî)
+            // Tablodaki kartların çoğunun son kullanma tarihi geçmiştir;
+            // aşağıdakiler ileri tarihli olanlardır. Kart token adımını
+            // geçerler; provizyon adımı varsayılan test üye işyerinde
+            // (9998) "Bank error" döndürüyor.
+            'paycell-akbank-visa' => ['label' => 'Paycell — Akbank (Visa)', 'number' => '4355093000777068', 'month' => '11', 'year' => '2040', 'cvv' => '238'],
+            'paycell-akbank-master' => ['label' => 'Paycell — Akbank (Mastercard)', 'number' => '5578293000121055', 'month' => '11', 'year' => '2040', 'cvv' => '313'],
+            'paycell-denizbank' => ['label' => 'Paycell — DenizBank (3D şifre: 123456)', 'number' => '5200190006338608', 'month' => '01', 'year' => '2030', 'cvv' => '410'],
+            'paycell-ziraat' => ['label' => 'Paycell — Ziraat (3D şifre: a)', 'number' => '4546711234567894', 'month' => '12', 'year' => '2026', 'cvv' => '000'],
         ];
     }
 

@@ -16,6 +16,7 @@ use Voxyfy\AnadoluPay\Gateways\Provider\CraftgateGateway;
 use Voxyfy\AnadoluPay\Gateways\Provider\MokaGateway;
 use Voxyfy\AnadoluPay\Gateways\Provider\ParamGateway;
 use Voxyfy\AnadoluPay\Gateways\Provider\ParatikaGateway;
+use Voxyfy\AnadoluPay\Gateways\Provider\PaycellGateway;
 use Voxyfy\AnadoluPay\Gateways\Provider\PayTrGateway;
 use Voxyfy\AnadoluPay\Gateways\Provider\ToslaGateway;
 
@@ -533,6 +534,25 @@ return [
                 'payment_api' => env('TOSLA_PAYMENT_API', 'https://entegrasyon.tosla.com/api/Payment'),
                 'gateway_3d' => env('TOSLA_GATEWAY_3D', 'https://entegrasyon.tosla.com/api/Payment/ProcessCardForm'),
                 'gateway_3d_host' => env('TOSLA_GATEWAY_3D_HOST', 'https://entegrasyon.tosla.com/api/Payment/threeDSecure'),
+            ],
+        ],
+
+        'paycell' => [
+            'gateway' => PaycellGateway::class,
+            'merchant_id' => env('PAYCELL_MERCHANT_CODE'),
+            'username' => env('PAYCELL_APPLICATION_NAME'),
+            'password' => env('PAYCELL_APPLICATION_PWD'),
+            'secret_key' => env('PAYCELL_SECURE_CODE'),
+            'extra' => [
+                'msisdn' => env('PAYCELL_MSISDN'),
+                'eula_id' => env('PAYCELL_EULA_ID', '17'),
+                'client_ip' => env('PAYCELL_CLIENT_IP', '127.0.0.1'),
+            ],
+            'test_mode' => env('PAYCELL_TEST_MODE', false),
+            'endpoints' => [
+                'payment_api' => env('PAYCELL_PAYMENT_API', 'https://tpay.turkcell.com.tr/tpay/provision/services/restful/getCardToken'),
+                'token_api' => env('PAYCELL_TOKEN_API', 'https://epayment.turkcell.com.tr/paymentmanagement/rest/getCardTokenSecure'),
+                'gateway_3d' => env('PAYCELL_GATEWAY_3D', 'https://epayment.turkcell.com.tr/paymentmanagement/rest/threeDSecure'),
             ],
         ],
 
