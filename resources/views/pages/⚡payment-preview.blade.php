@@ -141,9 +141,20 @@ new #[Layout('layouts.preview')] class extends Component
             'moka-isbank' => ['label' => 'Moka — İş Bankası (Visa)', 'number' => '4183441122223339', 'month' => '12', 'year' => '2030', 'cvv' => '000'],
             'moka-akbank' => ['label' => 'Moka — Akbank (Master)', 'number' => '5127541122223332', 'month' => '12', 'year' => '2030', 'cvv' => '000'],
             'moka-ziraat' => ['label' => 'Moka — Ziraat (Master)', 'number' => '5136621122223331', 'month' => '12', 'year' => '2030', 'cvv' => '000'],
-            // NestPay (Ziraat ve diğer Asseco bankaları) — 3D SMS şifresi: a
+            // NestPay (Asseco) ailesi — 3D SMS şifresi hepsinde: a
+            //
+            // Ortak test ucunda (entegrasyon.asseco-see.com.tr) bu kartlar
+            // büyük ölçüde mağazadan bağımsızdır: 2026-08-11'de İş Bankası
+            // mağazasında altısı da `00` ile onaylandı. Yine de istisna var —
+            // 4355084355084358 Akbank'ın 100100000 mağazasında
+            // `Kartin son kullanma tarihi hatali` veriyor. Biri reddedilirse
+            // listedeki bir diğerini deneyin.
             'nestpay-ziraat-visa' => ['label' => 'Ziraat / NestPay — Visa (3D şifre: a)', 'number' => '4546711234567894', 'month' => '12', 'year' => '2026', 'cvv' => '000'],
             'nestpay-ziraat-master' => ['label' => 'Ziraat / NestPay — Mastercard (3D şifre: a)', 'number' => '5401341234567891', 'month' => '12', 'year' => '2026', 'cvv' => '000'],
+            'nestpay-akbank-master' => ['label' => 'Akbank NestPay — Mastercard (3D şifre: a)', 'number' => '5571135571135575', 'month' => '12', 'year' => '2026', 'cvv' => '000'],
+            'nestpay-akbank-visa' => ['label' => 'Akbank NestPay — Visa (3D şifre: a)', 'number' => '4355084355084358', 'month' => '12', 'year' => '2026', 'cvv' => '000'],
+            'nestpay-tfkb-master' => ['label' => 'Türkiye Finans NestPay — Mastercard (3D şifre: a)', 'number' => '5377195377190410', 'month' => '12', 'year' => '2026', 'cvv' => '000'],
+            'nestpay-tfkb-visa' => ['label' => 'Türkiye Finans NestPay — Visa (3D şifre: a)', 'number' => '4799174799173828', 'month' => '12', 'year' => '2026', 'cvv' => '000'],
             // Tosla — tosla.com/isim-icin/gelistirici-merkezi (resmî)
             'tosla-ziraat' => ['label' => 'Tosla — Ziraat Bankkart (Visa)', 'number' => '4546711234567894', 'month' => '12', 'year' => '2026', 'cvv' => '000'],
             'tosla-visa' => ['label' => 'Tosla — Visa', 'number' => '4531444531442283', 'month' => '12', 'year' => '2026', 'cvv' => '001'],
