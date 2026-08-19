@@ -7,7 +7,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Throwable;
 use Voxyfy\AnadoluPay\DTO\CardData;
 use Voxyfy\AnadoluPay\DTO\CreatePaymentData;
@@ -47,7 +46,7 @@ class PaymentTestController extends Controller
         // Sipariş numarasını Volt bileşeni üretir; böylece kullanıcı
         // ödemeyi başlatmadan önce numarayı görebilir ve sonra durum
         // sorgusunda aynı numarayı kullanabilir.
-        $orderId = $validated['order_id'] ?: 'TEST-'.strtoupper(Str::random(10));
+        $orderId = $validated['order_id'] ?: AnadoluPay::orderId();
 
         $data = new CreatePaymentData(
             // Tutarı kuruş cinsinden taşımak float yuvarlama hatalarını önler.

@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
@@ -572,7 +571,7 @@ new #[Layout('layouts.preview')] class extends Component
     #[Computed(persist: true)]
     public function orderId(): string
     {
-        return 'TEST-'.strtoupper(Str::random(10));
+        return AnadoluPay::orderId();
     }
 }; ?>
 <div class="min-h-svh">
