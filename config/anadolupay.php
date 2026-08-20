@@ -18,6 +18,7 @@ use Voxyfy\AnadoluPay\Gateways\Provider\ParamGateway;
 use Voxyfy\AnadoluPay\Gateways\Provider\ParatikaGateway;
 use Voxyfy\AnadoluPay\Gateways\Provider\PaycellGateway;
 use Voxyfy\AnadoluPay\Gateways\Provider\PayTrGateway;
+use Voxyfy\AnadoluPay\Gateways\Provider\TamiGateway;
 use Voxyfy\AnadoluPay\Gateways\Provider\ToslaGateway;
 
 return [
@@ -57,6 +58,30 @@ return [
 
     'fake' => [
         'success_rate' => env('ANADOLUPAY_FAKE_SUCCESS_RATE', 100),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sipariş Numarası
+    |--------------------------------------------------------------------------
+    |
+    | `CreatePaymentData`'ya sipariş numarası boş geçilirse burada tanımlanan
+    | ön ek ve uzunlukla otomatik üretilir; ön ek ANADOLUPAY_ORDER_PREFIX=ODM-
+    | ise sonuç ODM-4KX9AB2Q7T biçiminde olur.
+    |
+    | Ön eki kısa tutun. PosNet (Yapı Kredi, Albaraka) ve Paycell sipariş
+    | numarasını 20 karaktere sığdırır; ön ek bu bütçeden düşer ve taşarsa
+    | driver sessizce kesmek yerine hata verir.
+    |
+    | Paycell'in ayrı bir davranışı var: referans numarasını üretirken
+    | rakam dışındaki her karakteri atar. Yani ön ek Paycell'de hiç
+    | görünmez, benzersizlik tamamen rastgele bölümdedir.
+    |
+    */
+
+    'order' => [
+        'prefix' => env('ANADOLUPAY_ORDER_PREFIX', ''),
+        'length' => env('ANADOLUPAY_ORDER_LENGTH', 10),
     ],
 
     /*
@@ -192,7 +217,10 @@ return [
             'endpoints' => [
                 'payment_api' => env('AKBANK_PAYMENT_API', 'https://www.sanalakpos.com/fim/api'),
                 'gateway_3d' => env('AKBANK_GATEWAY_3D', 'https://www.sanalakpos.com/fim/est3Dgate'),
-                'gateway_3d_host' => env('AKBANK_GATEWAY_3D_HOST', 'https://sanalpos.sanalakpos.com.tr/fim/est3Dgate'),
+                // Varsayılan yok: dolaşımdaki `sanalpos.sanalakpos.com.tr`
+                // adresi DNS'te çözülmüyor. 3D Host kullanacaksanız
+                // bankanın verdiği adresi env ile geçin.
+                'gateway_3d_host' => env('AKBANK_GATEWAY_3D_HOST'),
             ],
         ],
 
@@ -333,6 +361,13 @@ return [
             'refund_password' => env('GARANTI_REFUND_PASSWORD'),
             'extra' => [
                 'refund_username' => env('GARANTI_REFUND_USERNAME'),
+                // Bayi (alt üye işyeri) yapılandırmalı terminallerde banka
+                // verdiği bayi kodunu her istekte zorunlu tutar; boş
+                // bırakıldığında istek bu alanı hiç içermez.
+                'sub_merchant_id' => env('GARANTI_SUB_MERCHANT_ID'),
+                // Alanın XML'deki yeri bankanın bayi tanımına göre değişebiliyor;
+                // gerekirse iç düğüme taşınabilir (örn. Terminal.SubMerchantID).
+                'sub_merchant_id_path' => env('GARANTI_SUB_MERCHANT_ID_PATH', 'SubMerchantID'),
             ],
             'test_mode' => env('GARANTI_TEST_MODE', false),
             'endpoints' => [
@@ -393,7 +428,6 @@ return [
             'terminal_id' => env('ZIRAAT_PAYFLEX_TERMINAL_ID'),
             'password' => env('ZIRAAT_PAYFLEX_PASSWORD'),
             'test_mode' => env('ZIRAAT_PAYFLEX_TEST_MODE', false),
-            'timeout' => env('ZIRAAT_PAYFLEX_TIMEOUT'),
             'endpoints' => [
                 'payment_api' => env('ZIRAAT_PAYFLEX_PAYMENT_API', 'https://sanalpos.ziraatbank.com.tr/v4/v3/Vposreq.aspx'),
                 'gateway_3d' => env('ZIRAAT_PAYFLEX_GATEWAY_3D', 'https://mpi.ziraatbank.com.tr/Enrollment.aspx'),
@@ -540,19 +574,27 @@ return [
 
         'paycell' => [
             'gateway' => PaycellGateway::class,
+            // Paycell terminolojisi: merchant_id => merchantCode,
+            // username => applicationName, password => applicationPwd,
+            // secret_key => secureCode.
             'merchant_id' => env('PAYCELL_MERCHANT_CODE'),
             'username' => env('PAYCELL_APPLICATION_NAME'),
             'password' => env('PAYCELL_APPLICATION_PWD'),
             'secret_key' => env('PAYCELL_SECURE_CODE'),
             'extra' => [
+                // Paycell abone tabanlı çalıştığı için her istek bir msisdn taşır.
                 'msisdn' => env('PAYCELL_MSISDN'),
                 'eula_id' => env('PAYCELL_EULA_ID', '17'),
+                // İsteklerde bildirilen üye işyeri çıkış IP'si.
                 'client_ip' => env('PAYCELL_CLIENT_IP', '127.0.0.1'),
             ],
             'test_mode' => env('PAYCELL_TEST_MODE', false),
             'endpoints' => [
+                // Provizyon, iade, iptal ve sorgu uçlarının tabanı.
                 'payment_api' => env('PAYCELL_PAYMENT_API', 'https://tpay.turkcell.com.tr/tpay/provision/services/restful/getCardToken'),
+                // Kart token'ı ayrı bir uçtan alınır.
                 'token_api' => env('PAYCELL_TOKEN_API', 'https://epayment.turkcell.com.tr/paymentmanagement/rest/getCardTokenSecure'),
+                // 3D doğrulama sayfası.
                 'gateway_3d' => env('PAYCELL_GATEWAY_3D', 'https://epayment.turkcell.com.tr/paymentmanagement/rest/threeDSecure'),
             ],
         ],
@@ -619,6 +661,31 @@ return [
             'endpoints' => [
                 // Sandbox: https://sandbox-api.craftgate.io
                 'payment_api' => env('CRAFTGATE_PAYMENT_API', 'https://api.craftgate.io'),
+            ],
+        ],
+
+        'tami' => [
+            'gateway' => TamiGateway::class,
+            // Tami terminolojisi: merchant_id => merchantNumber,
+            // terminal_id => terminalNumber, secret_key => PG-Auth-Token
+            // hesabında kullanılan secretKey. username/password ise
+            // securityHash imzası için JWK kid/k çiftidir (ayrı bir anahtar).
+            'merchant_id' => env('TAMI_MERCHANT_NUMBER'),
+            'terminal_id' => env('TAMI_TERMINAL_NUMBER'),
+            'secret_key' => env('TAMI_SECRET_KEY'),
+            'username' => env('TAMI_JWK_KID'),
+            'password' => env('TAMI_JWK_K'),
+            // 3D dönüş imzasının (hashedData) formülü Tami tarafından resmen
+            // doğrulanmadı (bkz. TamiGateway docblock'u); sandbox'ta yanlış
+            // pozitif almamak için kapatılabilir.
+            'verify_hash' => env('TAMI_VERIFY_HASH', true),
+            'test_mode' => env('TAMI_TEST_MODE', false),
+            'extra' => [
+                'payment_group' => env('TAMI_PAYMENT_GROUP', 'PRODUCT'),
+            ],
+            'endpoints' => [
+                // Test: https://sandbox-paymentapi.tami.com.tr
+                'payment_api' => env('TAMI_PAYMENT_API', 'https://paymentapi.tami.com.tr'),
             ],
         ],
 
